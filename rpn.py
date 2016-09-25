@@ -15,7 +15,39 @@ class Frame:
         for i in range(self.bottom):
             self.screen.move(self.left , i)
             self.screen.draw(self.right, i, char=' ', bg=7)
+            
+    def print_multiline_exception(self, ex):
+        lines = [' ' * 30] + ex.lines + [' ' * 30, 'Press enter to continue']
+        for i in range(len(lines)):
+            line = lines[i]
+            line += ' ' * (30 - len(line))
+            self.screen.print_at(line,
+                                 self.left + 15, 5 + i,
+                                 colour=7,
+                                 bg=1)
+        
+        self.screen.refresh()
+        
+        while self.screen.get_key() != 13:
+            pass
+            
+class MultilineException(Exception):
 
+    def __init__(self, message):
+        super(Exception, self).__init__(message)
+        self.lines = []
+        words = message.split(' ')
+        buffer = ''
+        for word in words:
+            if len(buffer) + len(word) + 1 < 28:
+                buffer += ' ' + word
+                continue
+            elif len(buffer) + len(word) + 1 == 28:
+                buffer += ' ' + word
+            self.lines.append(buffer)
+            buffer = ' ' + word
+        if buffer:
+            self.lines.append(buffer)
 
 class Calculator:
 
@@ -25,7 +57,7 @@ class Calculator:
         self.stack = []
         
     def command(self, cmd_number):
-        
+
         if cmd_number in (range(0x30, 0x3A) + [46]):
             self.input_buffer += chr(cmd_number)
 
@@ -103,7 +135,10 @@ def demo(screen):
             pass
             
         else:
-            calculator.command(ev)
+            try:
+                calculator.command(ev)
+            except MultilineException as ex:
+                frame.print_multiline_exception(ex)
             
 
         screen.refresh()
