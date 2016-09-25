@@ -67,13 +67,15 @@ class Calculator:
             
         # del
         elif cmd_number == -102:
-            self.stack.pop()
+            if self.stack:
+                self.stack.pop()
             
         # right arrow
         elif cmd_number == -205:
-            temp = self.stack[-1]
-            self.stack[-1] = self.stack[-2]
-            self.stack[-2] = temp
+            if len(self.stack) >= 2:
+                temp = self.stack[-1]
+                self.stack[-1] = self.stack[-2]
+                self.stack[-2] = temp
          
         # Enter
         elif cmd_number == 13:
@@ -81,7 +83,45 @@ class Calculator:
         
         # *
         elif cmd_number == 42:
-            pass
+            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+                raise MultilineException('Too few arguments for multiplication!')
+
+            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+            self.stack[-1] *= temp
+
+            self.input_buffer = ''
+
+        elif cmd_number == 43:
+            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+                raise MultilineException('Too few arguments for addition!')
+
+            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+            self.stack[-1] += temp
+
+            self.input_buffer = ''
+
+        elif cmd_number == 45:
+            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+                raise MultilineException('Too few arguments for subtraction!')
+
+            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+            self.stack[-1] -= temp
+
+            self.input_buffer = ''
+
+        elif cmd_number == 47:
+            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+                raise MultilineException('Too few arguments for division!')
+
+            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+
+            if temp == 0:
+                raise MultilineException("You divided by zero. You know you can't do that.")
+
+            self.stack[-1] /= temp
+
+            self.input_buffer = ''
+
         else:
             self.input_buffer += str(cmd_number)
             
