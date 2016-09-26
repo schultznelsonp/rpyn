@@ -60,75 +60,24 @@ class Calculator:
         if cmd_number in (range(0x30, 0x3A) + [46]):
             self.input_buffer += chr(cmd_number)
 
-        # Backspace
-        elif cmd_number == -300:
-            self.input_buffer = self.input_buffer[:-1]
-
-        # del
-        elif cmd_number == -102:
-            if self.stack:
-                self.stack.pop()
-
-        # right arrow
-        elif cmd_number == -205:
-            if len(self.stack) >= 2:
-                temp = self.stack[-1]
-                self.stack[-1] = self.stack[-2]
-                self.stack[-2] = temp
-
-        # Enter
-        elif cmd_number == 13:
-            self._append_buffer()
-
-        # *
-        elif cmd_number == 42:
-            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
-                raise MultilineException('Too few arguments for multiplication!')
-
-            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
-            self.stack[-1] *= temp
-
-            self.input_buffer = ''
-
-        elif cmd_number == 43:
-            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
-                raise MultilineException('Too few arguments for addition!')
-
-            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
-            self.stack[-1] += temp
-
-            self.input_buffer = ''
-
-        elif cmd_number == 45:
-            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
-                raise MultilineException('Too few arguments for subtraction!')
-
-            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
-            self.stack[-1] -= temp
-
-            self.input_buffer = ''
-
-        elif cmd_number == 47:
-            if len(self.stack) + (1 if self.input_buffer else 0) < 2:
-                raise MultilineException('Too few arguments for division!')
-
-            temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
-
-            if temp == 0:
-                raise MultilineException("You divided by zero. You know you can't do that.")
-
-            self.stack[-1] /= temp
-
-            self.input_buffer = ''
-
         elif cmd_number in range(301, 400):
             self.input_buffer = str(self.stack[-(cmd_number % 300)])
 
+        func = {
+            -300 : self._reduce_input_buffer,
+            -102 : self._pop_stack,
+            -205 : self._swap,
+            13   : self._append_buffer,
+            42   : self._multiply,
+            43   : self._add,
+            45   : self._subtract,
+            47   : self._div
+        }.get(cmd_number, None)
+
+        if func:
+            func()
         else:
             self.input_buffer += str(cmd_number)
-
-        if len(self.stack) > 99:
-            self.stack.pop(0)
 
     def get_input_buffer(self):
         return self.input_buffer
@@ -138,10 +87,64 @@ class Calculator:
 
     def _append_buffer(self):
         if not self.input_buffer and not self.stack:
-            return False
+            return
         self.stack.append(float(self.input_buffer) if self.input_buffer else self.stack[-1])
         self.input_buffer = ''
-        return True
+        if len(self.stack) > 99:
+            self.stack.pop(0)
+
+    def _reduce_input_buffer(self):
+        self.input_buffer = self.input_buffer[:-1]
+
+    def _pop_stack(self):
+        if self.stack:
+            self.stack.pop()
+
+    def _swap(self):
+        if len(self.stack) >= 2:
+            temp = self.stack[-1]
+            self.stack[-1] = self.stack[-2]
+            self.stack[-2] = temp
+
+    def _multiply(self):
+        if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+            raise MultilineException('Too few arguments for multiplication!')
+
+        temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+        self.stack[-1] *= temp
+
+        self.input_buffer = ''
+
+    def _add(self):
+        if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+            raise MultilineException('Too few arguments for addition!')
+
+        temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+        self.stack[-1] += temp
+
+        self.input_buffer = ''
+
+    def _subtract(self):
+        if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+            raise MultilineException('Too few arguments for subtraction!')
+
+        temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+        self.stack[-1] -= temp
+
+        self.input_buffer = ''
+
+    def _divide(self):
+        if len(self.stack) + (1 if self.input_buffer else 0) < 2:
+            raise MultilineException('Too few arguments for division!')
+
+        temp = float(self.input_buffer) if self.input_buffer else self.stack.pop()
+
+        if temp == 0:
+            raise MultilineException("You divided by zero. You know you can't do that.")
+
+        self.stack[-1] /= temp
+
+        self.input_buffer = ''
 
 def demo(screen):
     frame = Frame(screen)
