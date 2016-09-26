@@ -59,9 +59,11 @@ class Calculator:
 
         if cmd_number in (range(0x30, 0x3A) + [46]):
             self.input_buffer += chr(cmd_number)
+            return
 
         elif cmd_number in range(301, 400):
             self.input_buffer = str(self.stack[-(cmd_number % 300)])
+            return
 
         func = {
             -300 : self._reduce_input_buffer,
@@ -71,7 +73,7 @@ class Calculator:
             42   : self._multiply,
             43   : self._add,
             45   : self._subtract,
-            47   : self._div
+            47   : self._divide
         }.get(cmd_number, None)
 
         if func:
